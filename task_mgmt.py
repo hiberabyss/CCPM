@@ -213,14 +213,7 @@ def get_non_critial_chain(tasks, task_map, node_id):
             last_node = task_map[p[-1]]
             if len(last_node.pre_ids) == 0: continue
 
-            min_ff = -1
-            for pre_id in last_node.pre_ids:
-                pre_node = task_map[pre_id]
-                pre_ff = pre_node.ff
-                if min_ff < 0:
-                    min_ff = pre_ff
-                else:
-                    min_ff = min(min_ff, pre_ff)
+            min_ff = min(map(lambda x: task_map[x].ff, last_node.pre_ids))
 
             paths.remove(p)
             for pre_id in last_node.pre_ids:
@@ -234,27 +227,14 @@ def get_non_critial_chain(tasks, task_map, node_id):
 
     return paths
 
-def calc_fb(task_map):
-    map_h = ['A', 'B', 'S', 'H']
-    map_p = ['A', 'P']
-    map_k = ['K']
-    map_l = ['L']
-
-    print "FB_h: %s" % (calc_fb_via_map(map_h, task_map))
-    print "FB_p: %s" % (calc_fb_via_map(map_p, task_map))
-    print "FB_k: %s" % (calc_fb_via_map(map_k, task_map))
-    print "FB_l: %s" % (calc_fb_via_map(map_l, task_map))
-
 def calc_all_fb(tasks, task_map, cc, end_node):
     nc_end_nodes = get_non_critial_end_node(tasks, task_map, cc, end_node)
 
     for node_id in nc_end_nodes:
         ncc_paths = get_non_critial_chain(tasks, task_map, node_id)
-        max_fb = -1
-        for path in ncc_paths:
-            cur_fb = calc_fb_via_map(path, task_map)
-            if max_fb < 0: max_fb = cur_fb
-            else: max_fb = max(max_fb, cur_fb)
+
+        max_fb = max(map(lambda x: calc_fb_via_map(x, task_map), ncc_paths))
+
         node = task_map[node_id]
         print "%s FB:FF:Final %s %s %s" % (ncc_paths, max_fb, node.ff, min(max_fb, node.ff))
 
@@ -283,10 +263,8 @@ if __name__ == "__main__":
 
     calc_all_fb(tasks, task_map, cc, end_node)
 
-    cc_tasks = []
-    for node_id in cc:
-        cc_tasks.append(task_map[node_id])
+    cc_tasks = map(lambda x: task_map[x], cc)
+
     print calc_pb(cc_tasks)
-    #  calc_fb(task_map)
 
 # vim:expandtab:
