@@ -169,11 +169,21 @@ def print_tasks(tasks, task_map, max_ef):
     for t in tasks:
         print "%s es:ef:ls:lf:af:rt:TF:FF %s, %s, %s, %s, %s, %s, %s, %s, %s" % (t.ID, t.es, t.ef, t.ls, t.lf, t.get_af(), t.get_rt(), t.get_diff(), (t.ls - t.es), t.ff)
 
-def get_critical_chain(tasks):
-    cc = []
-    for t in tasks:
-        if t.es == t.ls:
-            cc.append(t.ID)
+def get_critical_chain(tasks, task_map, max_ef_id):
+    cc = [max_ef_id]
+    node = task_map[max_ef_id]
+    while len(node.pre_ids) > 0:
+        max_ef = 0
+        max_id = ''
+        for node_id in node.pre_ids:
+            if task_map[node_id].ef >= max_ef:
+                max_ef = task_map[node_id].ef
+                max_id = node_id
+        node = task_map[max_id]
+        cc.append(max_id)
+    # for t in tasks:
+    #     if t.es == t.ls:
+    #         cc.append(t.ID)
     return cc
 
 def calc_fb_via_map(chain_map, task_map):
@@ -241,9 +251,13 @@ def calc_all_fb(tasks, task_map, cc, end_node):
 if __name__ == "__main__":
     tasks = read_tasks("./tasks.csv")
     max_ef = 0
+    max_ef_id = ''
+
     k = 0.5
     for t in tasks:
         calc_es_ef(tasks, task_map, t, k)
+        if t.ef > max_ef:
+            max_ef_id = t.ID
         max_ef = max(max_ef, t.ef)
 
     print "Max ef: %s" % max_ef
@@ -257,7 +271,9 @@ if __name__ == "__main__":
     for t in tasks:
         t.get_free_float(tasks, task_map, max_ef)
 
-    cc = get_critical_chain(tasks)
+    cc = get_critical_chain(tasks, task_map, max_ef_id)
+
+    print cc
 
     print_tasks(tasks, task_map, max_ef)
 
