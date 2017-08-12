@@ -166,8 +166,9 @@ def read_tasks(filename):
     return tasks
 
 def print_tasks(tasks, task_map, max_ef):
+    print "node,es,ef,ls,lf,af,rt,TF,FF"
     for t in tasks:
-        print "%s es:ef:ls:lf:af:rt:TF:FF %s, %s, %s, %s, %s, %s, %s, %s, %s" % (t.ID, t.es, t.ef, t.ls, t.lf, t.get_af(), t.get_rt(), t.get_diff(), (t.ls - t.es), t.ff)
+        print "%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % (t.ID, t.es, t.ef, t.ls, t.lf, t.get_af(), t.get_rt(), t.get_diff(), (t.ls - t.es), t.ff)
 
 def get_critical_chain(tasks, task_map, max_ef_id):
     cc = [max_ef_id]
