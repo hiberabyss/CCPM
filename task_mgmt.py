@@ -6,6 +6,8 @@
 # Last Modified By: Hongbo Liu <hbliu@freewheel.tv>
 
 from math import *
+import random
+import sys
 
 class Task():
     def __init__(self, ID, pre_ids, a, b, c, d, r1, r2, r3, r4, r5):
@@ -15,6 +17,9 @@ class Task():
         self.b = int(b)
         self.c = int(c)
         self.d = int(d)
+
+        self.k = 0.5
+
         self.e = -1
         self.es = -1
         self.ef = -1
@@ -108,22 +113,22 @@ def calc_pb(critical_chain):
         sum_pb += t.per_task_pb()
     return sqrt(sum_pb)
 
-def calc_es_ef(tasks, tmap, t, k):
+def calc_es_ef(tasks, tmap, t):
     if t.es >= 0: return
 
     if len(t.pre_ids) == 0:
         t.es = 0
-        t.ef = t.gete(k)
+        t.ef = t.gete(t.k)
         start_node.append(t.ID)
-        print "Start Node: " + t.ID
+        #  print "Start Node: " + t.ID
         return
 
     for item in t.pre_ids:
         pre_t = tmap[item]
-        calc_es_ef(tasks, tmap, pre_t, k)
+        calc_es_ef(tasks, tmap, pre_t)
         t.es = max(t.es, pre_t.ef)
 
-    t.ef = t.es + t.gete(k)
+    t.ef = t.es + t.gete(t.k)
 
 def calc_ls_lf(tasks, tmap, t, k, lf):
     if t.lf >= 0: return
@@ -249,14 +254,76 @@ def calc_all_fb(tasks, task_map, cc, end_node):
         node = task_map[node_id]
         print "%s FB:FF:Final %s %s %s" % (ncc_paths, max_fb, node.ff, min(max_fb, node.ff))
 
+
+def random_lists(cnt):
+    res = []
+    for j in range(cnt):
+        l = []
+        for i in range(19):
+            l.append(random.random())
+        res.append(l)
+
+    return res
+
+
+def get_nodes_max_ef(tasks):
+    max_ef = 0
+    for t in tasks:
+        calc_es_ef(tasks, task_map, t)
+        if t.ef > max_ef:
+            max_ef_id = t.ID
+        max_ef = max(max_ef, t.ef)
+
+    return max_ef
+
+
+def distribute(ef_list, cnt):
+    total = 0.0
+    res_map = {}
+
+    for r in ef_list:
+        total += r
+        level = int(r/100)
+        if level in res_map.keys():
+            res_map[level] += 1
+        else:
+            res_map[level] = 1
+
+    print "Average Max EF: %f" % (total/cnt)
+    print res_map
+    
+
+def get_average_max_ef(tasks):
+    cnt = 1000
+
+    rlists = random_lists(cnt)
+
+    res = []
+
+    for i in range(cnt):
+        tmp_tasks = list(tasks)
+        for j in range(19):
+            tmp_tasks[j].k = rlists[i][j]
+            tmp_tasks[j].es = -1
+            tmp_tasks[j].ef = -1
+        res.append(get_nodes_max_ef(tmp_tasks))
+
+    distribute(res, cnt)
+    for i in range(0, 1000, 100):
+        distribute(res[i:i+100], 100)
+
+
 if __name__ == "__main__":
     tasks = read_tasks("./tasks.csv")
     max_ef = 0
     max_ef_id = ''
 
+    dup_tasks = list(tasks)
+    #  sys.exit(0)
+
     k = 0.5
     for t in tasks:
-        calc_es_ef(tasks, task_map, t, k)
+        calc_es_ef(tasks, task_map, t)
         if t.ef > max_ef:
             max_ef_id = t.ID
         max_ef = max(max_ef, t.ef)
@@ -283,5 +350,7 @@ if __name__ == "__main__":
     cc_tasks = map(lambda x: task_map[x], cc)
 
     print calc_pb(cc_tasks)
+
+    get_average_max_ef(dup_tasks)
 
 # vim:expandtab:
