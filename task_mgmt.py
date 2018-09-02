@@ -31,12 +31,6 @@ class Task():
         self.r = [float(r1), float(r2), float(r3), float(r4), float(r5)]
         self.r_total = [8, 6, 5, 20, 7]
 
-        self.r1 = -1
-        self.r2 = -1
-        self.r3 = -1
-        self.r4 = -1
-        self.r5 = -1
-
     def e_f1(self, k):
         return self.a + sqrt(k * (self.c - self.b + self.d - self.a) * (self.b-self.a))
 
