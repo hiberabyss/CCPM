@@ -9,6 +9,7 @@ from math import *
 import random
 import sys
 
+
 class Task():
     #  def __init__(self, ID, pre_ids, a, b, c, d, r1, r2, r3, r4, r5):
     def __init__(self, ID, pre_ids, a, b, c, r11, r12, r13, r21, r22, r23, r31, r32, r33):
@@ -33,7 +34,6 @@ class Task():
         self.r_total = [48, 53, 42]
 
     def e_f1(self, k):
-        #  return self.a + sqrt(k * (self.c - self.b + self.d - self.a) * (self.b-self.a))
         return self.a + sqrt(k * (self.c - self.a) * (self.b - self.a))
 
     def e_f2(self, k):
@@ -109,6 +109,7 @@ class Task():
         self.ff = min_children_es - self.ef
         return min_children_es - self.ef
 
+
 start_node = []
 end_node = []
 
@@ -131,7 +132,8 @@ def get_e_sum(critical_chain, task_map):
 
 
 def calc_es_ef(tasks, tmap, t):
-    if t.es >= 0: return
+    if t.es >= 0:
+        return
 
     if len(t.pre_ids) == 0:
         t.es = 0
@@ -147,8 +149,10 @@ def calc_es_ef(tasks, tmap, t):
 
     t.ef = t.es + t.gete(t.k)
 
+
 def calc_ls_lf(tasks, tmap, t, k, lf):
-    if t.lf >= 0: return
+    if t.lf >= 0:
+        return
 
     t.lf = lf
     t.ls = t.lf - t.gete(k)
@@ -158,12 +162,14 @@ def calc_ls_lf(tasks, tmap, t, k, lf):
         calc_ls_lf(tasks, tmap, pre_t, k, t.ls)
         #  t.es = max(t.es, pre_t.ef)
 
+
 def get_task_with_max_ef(tasks):
     max_t = None
     max_ef = -1
 
     for t in tasks:
-        if t.lf >= 0: continue
+        if t.lf >= 0:
+            continue
         #  if t.lf < 0 and abs(t.ef - MAX_EF) <= 0.00001: return t
         if t.ef > max_ef:
             max_ef = t.ef
@@ -172,6 +178,7 @@ def get_task_with_max_ef(tasks):
     return max_t
 
 task_map = {}
+
 
 def read_tasks(filename):
     taskf = open(filename)
@@ -187,10 +194,12 @@ def read_tasks(filename):
 
     return tasks
 
+
 def print_tasks(tasks, task_map, max_ef):
     print "node,es,ef,ls,lf,af,rt,TF,FF"
     for t in tasks:
         print "%s,%s,%s,%s,%s,%s,%s,%s,%s" % (t.ID, t.es, t.ef, t.ls, t.lf, t.get_af(), t.get_rt(), (t.ls - t.es), t.ff)
+
 
 def get_critical_chain(tasks, task_map, max_ef_id):
     cc = [max_ef_id]
@@ -209,6 +218,7 @@ def get_critical_chain(tasks, task_map, max_ef_id):
     #         cc.append(t.ID)
     return cc
 
+
 def get_non_critial_end_node(tasks, task_map, critical_chain, end_node):
     nc_end_nodes = []
 
@@ -223,6 +233,7 @@ def get_non_critial_end_node(tasks, task_map, critical_chain, end_node):
             nc_end_nodes.append(pre_node)
 
     return nc_end_nodes
+
 
 def get_non_critial_chain(tasks, task_map, node_id):
     paths = [[node_id]]
@@ -316,7 +327,8 @@ def distribute(ef_list, cnt):
 
     print "Average Max EF: %f" % (total/cnt)
     print res_map
-    
+
+
 def get_average_max_ef(tasks):
     cnt = 1000
 
@@ -336,6 +348,7 @@ def get_average_max_ef(tasks):
     for i in range(0, 1000, 100):
         distribute(res[i:i+100], 100)
 
+
 if __name__ == "__main__":
     tasks = read_tasks("./tasks2.csv")
     max_ef = 0
@@ -353,7 +366,8 @@ if __name__ == "__main__":
     print "Max ef: %s" % max_ef
     while True:
         t = get_task_with_max_ef(tasks)
-        if t is None: break
+        if t is None:
+            break
         print "End Node: %s %s" % (t.ID, t.ef)
         end_node.append(t.ID)
         calc_ls_lf(tasks, task_map, t, k, max_ef)
