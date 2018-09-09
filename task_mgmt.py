@@ -12,12 +12,29 @@ import sys
 
 class Task():
     #  def __init__(self, ID, pre_ids, a, b, c, d, r1, r2, r3, r4, r5):
-    def __init__(self, ID, pre_ids, a, b, c, r11, r12, r13, r21, r22, r23, r31, r32, r33):
+    def __init__(self,
+                 ID,
+                 pre_ids,
+                 a,
+                 b,
+                 c,
+                 r11,
+                 r12,
+                 r13,
+                 r21,
+                 r22,
+                 r23,
+                 r31,
+                 r32,
+                 r33,
+                 sigma):
+
         self.ID = ID
         self.pre_ids = list(pre_ids)
         self.a = int(a)
         self.b = int(b)
         self.c = int(c)
+        self.sigma = float(sigma)
 
         self.k = 0.5
 
@@ -29,7 +46,9 @@ class Task():
 
         self.ff = -1
 
-        self.r = [[int(r11), int(r12), int(r13)], [int(r21), int(r22), int(r23)], [int(r31), int(r32), int(r33)]]
+        self.r = [[int(r11), int(r12), int(r13)],
+                  [int(r21), int(r22), int(r23)],
+                  [int(r31), int(r32), int(r33)]]
         #  self.r = [float(r1), float(r2), float(r3), float(r4), float(r5)]
         self.r_total = [48, 53, 42]
 
@@ -55,7 +74,10 @@ class Task():
     def get_diff(self):
         return self.gete(0.9, 0) - self.gete(0.5, 0)
 
-    def gete(self, k, mode=1):
+    def gete(self, k=0.5, mode=1):
+        import numpy
+        return numpy.random.normal(self.b, self.sigma)
+
         if mode > 0:
             return [self.a, self.b, self.c][self.get_node_type()]
 
@@ -160,7 +182,6 @@ def calc_ls_lf(tasks, tmap, t, k, lf):
     for item in t.pre_ids:
         pre_t = tmap[item]
         calc_ls_lf(tasks, tmap, pre_t, k, t.ls)
-        #  t.es = max(t.es, pre_t.ef)
 
 
 def get_task_with_max_ef(tasks):
@@ -170,14 +191,11 @@ def get_task_with_max_ef(tasks):
     for t in tasks:
         if t.lf >= 0:
             continue
-        #  if t.lf < 0 and abs(t.ef - MAX_EF) <= 0.00001: return t
         if t.ef > max_ef:
             max_ef = t.ef
             max_t = t
 
     return max_t
-
-task_map = {}
 
 
 def read_tasks(filename):
@@ -185,38 +203,35 @@ def read_tasks(filename):
     lines = taskf.readlines()
     taskf.close()
     tasks = []
+    task_map = {}
 
     for line in lines:
         items = line.split(',')
-        t = Task(items[0], items[1], items[2], items[3], items[4], items[6], items[7], items[8], items[9], items[10], items[11], items[12], items[13], items[14])
+        t = Task(items[0],
+                 items[1],
+                 items[2],
+                 items[3],
+                 items[4],
+                 items[6],
+                 items[7],
+                 items[8],
+                 items[9],
+                 items[10],
+                 items[11],
+                 items[12],
+                 items[13],
+                 items[14],
+                 items[15])
         tasks.append(t)
         task_map[items[0]] = t
 
-    return tasks
+    return tasks, task_map
 
 
-def print_tasks(tasks, task_map, max_ef):
-    print "node,es,ef,ls,lf,af,rt,TF,FF"
+def print_tasks(tasks):
+    print "node,es,ef,ls,lf,af,rt,TF,FF, diff"
     for t in tasks:
-        print "%s,%s,%s,%s,%s,%s,%s,%s,%s" % (t.ID, t.es, t.ef, t.ls, t.lf, t.get_af(), t.get_rt(), (t.ls - t.es), t.ff)
-
-
-def get_critical_chain(tasks, task_map, max_ef_id):
-    cc = [max_ef_id]
-    node = task_map[max_ef_id]
-    while len(node.pre_ids) > 0:
-        max_ef = 0
-        max_id = ''
-        for node_id in node.pre_ids:
-            if task_map[node_id].ef >= max_ef:
-                max_ef = task_map[node_id].ef
-                max_id = node_id
-        node = task_map[max_id]
-        cc.append(max_id)
-    # for t in tasks:
-    #     if t.es == t.ls:
-    #         cc.append(t.ID)
-    return cc
+        print "%s,%s,%s,%s,%s,%s,%s,%s,%s,%f" % (t.ID, t.es, t.ef, t.ls, t.lf, t.get_af(), t.get_rt(), (t.ls - t.es), t.ff, t.get_diff())
 
 
 def get_non_critial_end_node(tasks, task_map, critical_chain, end_node):
@@ -249,7 +264,8 @@ def get_non_critial_chain(tasks, task_map, node_id):
 
         for p in paths:
             last_node = task_map[p[-1]]
-            if len(last_node.pre_ids) == 0: continue
+            if len(last_node.pre_ids) == 0:
+                continue
 
             min_ff = min(map(lambda x: task_map[x].ff, last_node.pre_ids))
 
@@ -349,44 +365,74 @@ def get_average_max_ef(tasks):
         distribute(res[i:i+100], 100)
 
 
-if __name__ == "__main__":
-    tasks = read_tasks("./tasks2.csv")
+def get_critical_chain(k=0.5):
+    tasks, task_map = read_tasks("./tasks2.csv")
     max_ef = 0
     max_ef_id = ''
 
-    #  dup_tasks = list(tasks)
-
-    k = 0.5
     for t in tasks:
         calc_es_ef(tasks, task_map, t)
         if t.ef > max_ef:
             max_ef_id = t.ID
         max_ef = max(max_ef, t.ef)
 
-    print "Max ef: %s" % max_ef
-    while True:
-        t = get_task_with_max_ef(tasks)
-        if t is None:
-            break
-        print "End Node: %s %s" % (t.ID, t.ef)
-        end_node.append(t.ID)
-        calc_ls_lf(tasks, task_map, t, k, max_ef)
+    cc = [max_ef_id]
+    node = task_map[max_ef_id]
+    while len(node.pre_ids) > 0:
+        max_ef = 0
+        max_id = ''
+        for node_id in node.pre_ids:
+            if task_map[node_id].ef >= max_ef:
+                max_ef = task_map[node_id].ef
+                max_id = node_id
+        node = task_map[max_id]
+        cc.append(max_id)
 
-    for t in tasks:
-        t.get_free_float(tasks, task_map, max_ef)
+    return cc, task_map
 
-    cc = get_critical_chain(tasks, task_map, max_ef_id)
-    print cc
 
-    print_tasks(tasks, task_map, max_ef)
+def cc_stats():
+    task_map = {}
+    cc_array = []
 
-    print get_e_sum(cc, task_map)
-    print calc_pb(cc, task_map)
+    for i in range(1000):
+        cc, task_map = get_critical_chain()
+        cc_array.append(cc)
 
-    calc_all_fb(tasks, task_map, cc, end_node)
+    import collections
+    task_statics = collections.defaultdict(int)
+    for cc in cc_array:
+        for t in cc:
+            task_statics["%s" % cc] += 1
+        print("Critical Tasks: %s \t Total E: %f" % (cc, get_e_sum(cc, task_map)))
+
+    print task_statics
+
+
+if __name__ == "__main__":
+    cc_stats()
+    #  cc = get_critical_chain(task_map)
+    #  print cc
+
+    #  print "Max ef: %s" % max_ef
+    #  while True:
+        #  t = get_task_with_max_ef(tasks)
+        #  if t is None:
+            #  break
+        #  print "End Node: %s %s" % (t.ID, t.ef)
+        #  end_node.append(t.ID)
+        #  calc_ls_lf(tasks, task_map, t, k, max_ef)
+
+    #  for t in tasks:
+        #  t.get_free_float(tasks, task_map, max_ef)
+
+    #  print_tasks(tasks, task_map, max_ef)
+
+    #  print get_e_sum(cc, task_map)
+    #  print calc_pb(cc, task_map)
+
+    #  calc_all_fb(tasks, task_map, cc, end_node)
 
     #  cc_tasks = map(lambda x: task_map[x], cc)
-
-    #  get_average_max_ef(dup_tasks)
 
 # vim:expandtab:
