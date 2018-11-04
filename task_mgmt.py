@@ -9,9 +9,7 @@ from math import *
 import random
 import sys
 
-
 class Task():
-    #  def __init__(self, ID, pre_ids, a, b, c, d, r1, r2, r3, r4, r5):
     def __init__(self,
                  ID,
                  pre_ids,
@@ -76,7 +74,17 @@ class Task():
 
     def gete(self, k=0.5, mode=1):
         import numpy
-        return numpy.random.normal(self.b, self.sigma)
+        #  return numpy.random.normal(self.b, self.sigma)
+        base = self.a
+        #  random_num = random.randint(0,2)
+        if self.ID in list('ABCDUT'):
+          base = self.a
+        if self.ID in list('EHIJKLNRS'):
+          base = self.b
+        if self.ID in list('MOPQFG'):
+          base = self.c
+
+        return numpy.random.normal(base, self.sigma)
 
         if mode > 0:
             return [self.a, self.b, self.c][self.get_node_type()]
@@ -390,21 +398,43 @@ def get_critical_chain(k=0.5):
 
     return cc, task_map
 
-
 def cc_stats():
     task_map = {}
     cc_array = []
 
-    for i in range(1000):
+    counts = 10000
+    for i in range(counts):
         cc, task_map = get_critical_chain()
         cc_array.append(cc)
 
     import collections
     task_statics = collections.defaultdict(int)
+    time_cnt = collections.defaultdict(int)
     for cc in cc_array:
         for t in cc:
-            task_statics["%s" % cc] += 1
+            task_statics[t] += 1
+        time_cnt[floor(get_e_sum(cc, task_map))] += 1
         print("Critical Tasks: %s \t Total E: %f" % (cc, get_e_sum(cc, task_map)))
+
+    import matplotlib.pyplot as plt
+    lists = sorted(time_cnt.items())
+
+    sum = 0
+    sum_350 = 0
+    cdf = [[], []]
+    for item in lists:
+      if item[0] <= 350:
+        sum_350 += item[1]
+      sum += item[1]
+      cdf[0].append(item[0])
+      cdf[1].append(sum * 1.0 / counts)
+    #  print lists
+    #  x, y = zip(*lists)
+    val_350 = sum_350*1.0/counts
+    plt.annotate("[350," + str(val_350) + "]", (350, val_350), (350, val_350))
+    plt.plot(cdf[0], cdf[1])
+    plt.plot(350, sum_350*1.0/counts, 'ks')
+    plt.show()
 
     print task_statics
 
